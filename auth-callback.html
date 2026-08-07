@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WarrantyFlow Auth</title>
+    <script>
+      const redirect = window.location.hash || window.location.search;
+      const target = redirect ? `warrantyflow://auth/callback${redirect}` : 'warrantyflow://auth/callback';
+      window.location.replace(target);
+    </script>
+  </head>
+  <body></body>
+</html>

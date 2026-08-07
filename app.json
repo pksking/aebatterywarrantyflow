@@ -1,0 +1,41 @@
+{
+  "expo": {
+    "name": "AE Complaint Logs",
+    "slug": "ae-complaint-logs",
+    "version": "1.0.0",
+    "scheme": "aecomplaintlogs",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.aecomplaintlogs.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "WarrantyFlow uses your camera to scan product QR codes and serial labels."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "package": "com.aecomplaintlogs.app",
+      "permissions": [
+        "CAMERA"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "name": "AE Complaint Logs",
+      "shortName": "AE Logs",
+      "themeColor": "#174E4C",
+      "backgroundColor": "#F6F7F3"
+    },
+    "plugins": [
+      "expo-camera"
+    ]
+  }
+}

@@ -1,0 +1,20 @@
+# Environment variables
+.env
+
+# Dependency directories
+node_modules/
+
+# Expo files
+.expo/
+dist/
+web-build/
+
+# Build artifacts
+*.apk
+*.aab
+*.ipa
+
+# IDE and OS files
+.idea/
+.vscode/
+*.DS_Store
