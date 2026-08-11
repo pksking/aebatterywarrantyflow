@@ -21,6 +21,7 @@ config.resolver.extraNodeModules = {
   buffer: require.resolve('buffer'),
   url: require.resolve('url'),
   assert: require.resolve('assert'),
+  querystring: require.resolve('querystring-es3'),
 };
 
 module.exports = config;
