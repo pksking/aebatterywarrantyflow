@@ -4,26 +4,26 @@ const { getDefaultConfig } = require('expo/metro-config');
 /** @type {import('expo/metro-config').MetroConfig} */
 const config = getDefaultConfig(__dirname);
 
-// This is a workaround for an issue with the `ws` library, a dependency of supabase-js.
-// It tries to import Node.js core modules, which are not available in React Native.
-// We configure Metro to use browser-compatible versions of these modules.
-config.resolver.extraNodeModules = {
-  ...config.resolver.extraNodeModules,
-  stream: require.resolve('stream-browserify'),
-  zlib: require.resolve('browserify-zlib'),
+// This is a workaround for an issue with libraries like `supabase-js` that use Node.js core modules.
+// We configure Metro to use browser-compatible versions (polyfills) for these modules.
+const nodeCoreModules = {
+  assert: require.resolve('assert'),
+  buffer: require.resolve('buffer'),
   crypto: require.resolve('crypto-browserify'),
-  util: require.resolve('util'),
   events: require.resolve('events'),
+  fs: require.resolve('react-native-level-fs'),
   http: require.resolve('http-browserify'),
   https: require.resolve('https-browserify'),
   net: require.resolve('net-browserify'),
-  tls: require.resolve('tls-browserify'),
-  buffer: require.resolve('buffer'),
-  url: require.resolve('url'),
-  assert: require.resolve('assert'),
-  querystring: require.resolve('querystring-es3'),
   path: require.resolve('path-browserify'),
-  fs: require.resolve('react-native-level-fs'),
+  querystring: require.resolve('querystring-es3'),
+  stream: require.resolve('stream-browserify'),
+  tls: require.resolve('tls-browserify'),
+  url: require.resolve('url'),
+  util: require.resolve('util'),
+  zlib: require.resolve('browserify-zlib'),
 };
+
+config.resolver.extraNodeModules = { ...config.resolver.extraNodeModules, ...nodeCoreModules };
 
 module.exports = config;
