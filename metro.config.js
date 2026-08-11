@@ -23,6 +23,7 @@ config.resolver.extraNodeModules = {
   assert: require.resolve('assert'),
   querystring: require.resolve('querystring-es3'),
   path: require.resolve('path-browserify'),
+  fs: require.resolve('react-native-level-fs'),
 };
 
 module.exports = config;

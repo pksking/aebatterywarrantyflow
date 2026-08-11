@@ -33,6 +33,7 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-native": "0.86.2",
+    "react-native-level-fs": "^3.0.1",
     "react-native-web": "~0.21.0",
     "stream-browserify": "^3.0.0",
     "tls-browserify": "^0.2.2",
