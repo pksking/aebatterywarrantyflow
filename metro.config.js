@@ -13,6 +13,7 @@ config.resolver.extraNodeModules = {
   zlib: require.resolve('browserify-zlib'),
   crypto: require.resolve('crypto-browserify'),
   util: require.resolve('util'),
+  events: require.resolve('events'),
 };
 
 module.exports = config;
