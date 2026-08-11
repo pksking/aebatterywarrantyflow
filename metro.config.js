@@ -22,6 +22,7 @@ config.resolver.extraNodeModules = {
   url: require.resolve('url'),
   assert: require.resolve('assert'),
   querystring: require.resolve('querystring-es3'),
+  path: require.resolve('path-browserify'),
 };
 
 module.exports = config;
