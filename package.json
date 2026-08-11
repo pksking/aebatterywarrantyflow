@@ -34,6 +34,7 @@
     "react-native-web": "~0.21.0",
     "stream-browserify": "^3.0.0",
     "tls-browserify": "^0.2.2",
+    "url": "^0.11.4",
     "util": "^0.12.5"
   },
   "devDependencies": {

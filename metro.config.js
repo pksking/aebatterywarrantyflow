@@ -19,6 +19,7 @@ config.resolver.extraNodeModules = {
   net: require.resolve('net-browserify'),
   tls: require.resolve('tls-browserify'),
   buffer: require.resolve('buffer'),
+  url: require.resolve('url'),
 };
 
 module.exports = config;
