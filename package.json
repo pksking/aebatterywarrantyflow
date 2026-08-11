@@ -24,6 +24,7 @@
     "fbjs": "^3.0.5",
     "googleapis": "^170.0.0",
     "hermes-parser": "^0.20.0",
+    "http-browserify": "^1.7.0",
     "https-browserify": "^1.0.0",
     "net-browserify": "^0.2.4",
     "react": "19.2.3",
