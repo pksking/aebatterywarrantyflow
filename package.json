@@ -11,6 +11,7 @@
     "@supabase/realtime-js": "^2.11.0",
     "@supabase/supabase-js": "^2.49.1",
     "@vercel/node": "^5.5.0",
+    "browserify-zlib": "^0.2.0",
     "expo": "~57.0.8",
     "expo-camera": "~57.0.3",
     "expo-notifications": "~57.0.8",
@@ -21,7 +22,8 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-native": "0.86.0",
-    "react-native-web": "~0.21.0"
+    "react-native-web": "~0.21.0",
+    "stream-browserify": "^3.0.0"
   },
   "devDependencies": {
     "@capacitor/cli": "^8.0.0",

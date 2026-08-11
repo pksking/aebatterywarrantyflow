@@ -24,7 +24,9 @@
       "predictiveBackGestureEnabled": false,
       "package": "com.aecomplaintlogs.app",
       "permissions": [
-        "CAMERA"
+        "CAMERA",
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
       ]
     },
     "web": {
@@ -36,6 +38,11 @@
     },
     "plugins": [
       "expo-camera"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "a887383c-9ded-4145-b918-9d577b5ecfbf"
+      }
+    }
   }
 }

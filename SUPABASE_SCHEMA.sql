@@ -62,6 +62,18 @@ create table if not exists public.warranty_exchanges (
 alter table public.claims enable row level security;
 alter table public.warranty_exchanges enable row level security;
 
+-- Helper function to get the role of the currently authenticated user
+create or replace function get_current_user_role()
+returns text
+language sql
+security definer
+stable
+as $$
+  select role from public.profiles where id = auth.uid();
+$$;
+
+-- Drop existing policies before creating new ones
+
 drop policy if exists claims_select_all on public.claims;
 drop policy if exists claims_insert_all on public.claims;
 drop policy if exists claims_update_all on public.claims;
@@ -69,10 +81,21 @@ drop policy if exists exchanges_select_all on public.warranty_exchanges;
 drop policy if exists exchanges_insert_all on public.warranty_exchanges;
 drop policy if exists exchanges_update_all on public.warranty_exchanges;
 
+-- Anyone can view claims.
 create policy claims_select_all on public.claims for select using (true);
-create policy claims_insert_all on public.claims for insert with check (true);
-create policy claims_update_all on public.claims for update using (true) with check (true);
 
+-- Any authenticated user can create a claim.
+create policy claims_insert_all on public.claims for insert with check (auth.role() = 'authenticated');
+
+-- Any authenticated user can update a claim.
+-- For more security, you could restrict this to 'admin' or the user who created it.
+create policy claims_update_all on public.claims for update using (auth.role() = 'authenticated') with check (true);
+
+-- Anyone can view exchanges.
 create policy exchanges_select_all on public.warranty_exchanges for select using (true);
-create policy exchanges_insert_all on public.warranty_exchanges for insert with check (true);
-create policy exchanges_update_all on public.warranty_exchanges for update using (true) with check (true);
+
+-- Any authenticated user can create an exchange record.
+create policy exchanges_insert_all on public.warranty_exchanges for insert with check (auth.role() = 'authenticated');
+
+-- Only admins can update exchange records (as an example of a stricter policy).
+create policy exchanges_update_all on public.warranty_exchanges for update using (get_current_user_role() = 'admin') with check (true);
