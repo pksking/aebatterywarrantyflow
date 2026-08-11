@@ -5,7 +5,6 @@ import {
   ActivityIndicator,
   Alert,
   Image,
-  KeyboardAvoidingView,
   Linking,
   Modal,
   Platform,
@@ -17,6 +16,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  KeyboardAvoidingView,
   View,
   useWindowDimensions,
 } from 'react-native';
@@ -239,19 +239,6 @@ Notifications.setNotificationHandler({
   }),
 });
 
-function parseSessionFromUrl(url: string): { access_token?: string; refresh_token?: string } {
-  try {
-    const parsed = new URL(url);
-    const hash = parsed.hash.startsWith('#') ? parsed.hash.slice(1) : parsed.hash;
-    const params = new URLSearchParams(hash);
-    const access_token = params.get('access_token') || undefined;
-    const refresh_token = params.get('refresh_token') || undefined;
-    return { access_token, refresh_token };
-  } catch {
-    return {};
-  }
-}
-
 export default function App() {
   const { width } = useWindowDimensions();
   const isWide = width >= 920;
@@ -319,37 +306,6 @@ if (supabase) {
     if (!ready) return;
     void saveDemoClaims(claims);
   }, [claims, ready]);
-
-  useEffect(() => {
-    if (!supabase) return;
-
-    const handleDeepLink = async (url: string | null) => {
-      if (!url || !supabase) return;
-      try {
-        const tokens = parseSessionFromUrl(url);
-        if (tokens.access_token && tokens.refresh_token) {
-          const { data, error } = await supabase.auth.setSession({
-            access_token: tokens.access_token,
-            refresh_token: tokens.refresh_token,
-          });
-          if (error) throw error;
-if (data.session?.user) {
-            const nextUser = toAppUser(data.session.user.id, data.session.user.email, data.session.user.user_metadata);
-            setUser(nextUser);
-            setSignedIn(true);
-            void upsertProfile(nextUser);
-            void loadTeamMembers().then((members) => { if (members.length) setTeamMembers(members); });
-          }
-        }
-      } catch {
-        // Ignore callback parsing errors and fall back to the normal auth flow.
-      }
-    };
-
-    void Linking.getInitialURL().then(handleDeepLink);
-    const subscription = Linking.addEventListener('url', ({ url }) => { void handleDeepLink(url); });
-    return () => subscription.remove();
-  }, []);
 
   useEffect(() => {
     if (signedIn && supabase) {
@@ -909,7 +865,6 @@ function AuthScreen({ onAuthenticated }: { onAuthenticated: (user: AppUser) => v
       return;
     }
 
-    const authRedirectUrl = Platform.OS === 'web' ? `${typeof window !== 'undefined' ? window.location.origin : 'http://localhost'}/auth/callback` : 'aecomplaintlogs://auth/callback';    setBusy(true);
     setMessage('');
     setCooldownUntil(Date.now() + 9000);
 
@@ -967,13 +922,12 @@ function AuthScreen({ onAuthenticated }: { onAuthenticated: (user: AppUser) => v
       return;
     }
 
-    const authRedirectUrl = Platform.OS === 'web' ? `${typeof window !== 'undefined' ? window.location.origin : 'http://localhost'}/auth/callback` : 'aecomplaintlogs://auth/callback';
     setBusy(true);
     setMessage('');
     setCooldownUntil(Date.now() + 9000);
 
     try {
-      if (!supabase) throw new Error('Supabase is not configured.');
+      if (!supabase) throw new Error('Supabase is not configured.');      const authRedirectUrl = Platform.OS === 'web' ? `${typeof window !== 'undefined' ? window.location.origin : 'http://localhost'}/auth/callback` : 'aecomplaintlogs://auth/callback';
       const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, { redirectTo: authRedirectUrl });
       if (error) throw error;
       setMessage('If an account exists for this email, a password reset link has been sent.');
