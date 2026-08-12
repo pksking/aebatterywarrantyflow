@@ -769,6 +769,7 @@ if (!signedIn) {
             }}
             onBatteryAssigneeChange={handleBatteryAssigneeChange}
             onUpsAssigneeChange={handleUpsAssigneeChange}
+            onCheckForUpdates={checkForUpdates}
           />
         );
     }
@@ -1603,6 +1604,7 @@ function SettingsScreen({
   onSignOut,
   onBatteryAssigneeChange,
   onUpsAssigneeChange,
+  onCheckForUpdates,
 }: {
   user: AppUser;
   claims: Claim[];
@@ -1626,6 +1628,7 @@ function SettingsScreen({
   onSignOut: () => Promise<void>;
   onBatteryAssigneeChange: (name: string) => void; // Now handles toggling
   onUpsAssigneeChange: (name: string) => void;
+  onCheckForUpdates: () => void;
 }) {
   const [mode, setMode] = useState<ReminderMode>(reminderPolicy.mode);
   const [time, setTime] = useState(reminderPolicy.time);
@@ -1703,7 +1706,7 @@ const demoMembers: AppUser[] = [
   };
 
   return (
-    <View>
+    <>
       <ScreenHeading eyebrow={user.role === 'admin' ? 'ADMINISTRATION' : 'YOUR WORKSPACE'} title={user.role === 'admin' ? 'Keep your desk running smoothly.' : 'Your AE Complaint Logs account.'} copy={user.role === 'admin' ? 'Set follow-up habits, check data sync, and keep team permissions intentional.' : 'You can manage your own session and view the current workspace setup.'} />
 
       <View style={styles.settingsGrid}>
@@ -1814,12 +1817,12 @@ const demoMembers: AppUser[] = [
 
         {!isSupabaseConfigured ? <View style={styles.demoResetRow}><View><Text style={styles.demoResetTitle}>Need a clean demo?</Text><Text style={styles.demoResetCopy}>Restore the example claims stored only on this device.</Text></View><GhostButton label={resetting ? 'Resetting…' : 'Reset demo data'} onPress={async () => { setResetting(true); await onResetDemo(); setResetting(false); }} compact /></View> : null}
       </> : null}
-    </View>
 
       <View style={[styles.surface, { marginTop: 16 }]}>
         <Text style={styles.sectionTitle}>App Updates</Text>
-        <PrimaryButton label="Check for Updates" onPress={checkForUpdates} fullWidth />
+        <PrimaryButton label="Check for Updates" onPress={onCheckForUpdates} fullWidth />
       </View>
+    </>
   );
 }
 
