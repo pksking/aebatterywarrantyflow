@@ -264,6 +264,13 @@ const [upsModels, setUpsModels] = useState<UpsModel[]>([]);
   const [scannerTarget, setScannerTarget] = useState<((payload: string) => void) | null>(null);
   const [notificationFilter, setNotificationFilter] = useState<NotificationFilter>(null);
 
+  const { isUpdatePending, checkError, downloadError, currentlyRunning } = Updates.useUpdates();
+
+  useEffect(() => {
+    if (checkError) Alert.alert('Update Check Failed', `An error occurred while checking for updates: ${checkError.message}`);
+    if (downloadError) Alert.alert('Update Download Failed', `An error occurred while downloading an update: ${downloadError.message}`);
+  }, [checkError, downloadError]);
+
   useEffect(() => {
     let mounted = true;
 
@@ -653,22 +660,21 @@ setSyncMessage(`Claims sync complete: ${result.synced} synced.`);
   };
 
   const checkForUpdates = async () => {
-    if (__DEV__) {
-      Alert.alert('Development Mode', 'You are in development mode. Updates are not applicable.');
-      return;
-    }
     try {
-      const update = await Updates.checkForUpdateAsync();
-      if (update.isAvailable) {
-        Alert.alert('Update Found!', 'An update is available and will be applied on the next app restart.', [
+      const { isAvailable } = await Updates.checkForUpdateAsync();
+      if (isAvailable) {
+        await Updates.fetchUpdateAsync();
+        Alert.alert('Update Found!', 'A new update has been downloaded and will be applied on the next app restart.', [
           { text: 'OK' },
-          { text: 'Restart Now', onPress: async () => { await Updates.fetchUpdateAsync(); await Updates.reloadAsync(); } },
+          { text: 'Restart Now', onPress: async () => await Updates.reloadAsync() },
         ]);
       } else {
         Alert.alert('No Updates', 'You are already running the latest version.');
       }
     } catch (error) {
-      Alert.alert('Update Check Failed', `An error occurred while checking for updates: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      const message = error instanceof Error ? error.message : 'An unknown error occurred';
+      Alert.alert('Update Check Failed', `An error occurred while checking for updates: ${message}`);
+      console.error(error);
     }
   };
 
@@ -770,6 +776,7 @@ if (!signedIn) {
             onBatteryAssigneeChange={handleBatteryAssigneeChange}
             onUpsAssigneeChange={handleUpsAssigneeChange}
             onCheckForUpdates={checkForUpdates}
+            currentlyRunning={currentlyRunning}
           />
         );
     }
@@ -778,6 +785,15 @@ if (!signedIn) {
   return (
     <SafeAreaView style={styles.appShell}>
       <StatusBar barStyle="dark-content" />
+      {isUpdatePending && (
+        <View style={styles.updateBanner}>
+          <Text style={styles.updateBannerText}>A new update is ready.</Text>
+          <Pressable onPress={async () => await Updates.reloadAsync()}>
+            <Text style={styles.updateBannerAction}>Restart & Apply</Text>
+          </Pressable>
+        </View>
+      )}
+
       <View style={[styles.appFrame, isWide && styles.appFrameWide]}>
         {isWide ? (
           <Sidebar
@@ -1605,6 +1621,7 @@ function SettingsScreen({
   onBatteryAssigneeChange,
   onUpsAssigneeChange,
   onCheckForUpdates,
+  currentlyRunning,
 }: {
   user: AppUser;
   claims: Claim[];
@@ -1629,6 +1646,7 @@ function SettingsScreen({
   onBatteryAssigneeChange: (name: string) => void; // Now handles toggling
   onUpsAssigneeChange: (name: string) => void;
   onCheckForUpdates: () => void;
+  currentlyRunning: Updates.UseUpdatesReturnType['currentlyRunning'];
 }) {
   const [mode, setMode] = useState<ReminderMode>(reminderPolicy.mode);
   const [time, setTime] = useState(reminderPolicy.time);
@@ -1821,6 +1839,11 @@ const demoMembers: AppUser[] = [
       <View style={[styles.surface, { marginTop: 16 }]}>
         <Text style={styles.sectionTitle}>App Updates</Text>
         <PrimaryButton label="Check for Updates" onPress={onCheckForUpdates} fullWidth />
+        {!__DEV__ && currentlyRunning.updateId && (
+          <Text style={styles.updateIdText}>
+            Current version: {currentlyRunning.updateId.slice(0, 8)}
+          </Text>
+        )}
       </View>
     </>
   );
@@ -2123,6 +2146,10 @@ const styles = StyleSheet.create({ // NOSONAR
   appFrameWide: { flexDirection: 'row', maxWidth: 1500, width: '100%', alignSelf: 'center', borderLeftWidth: 1, borderRightWidth: 1, borderColor: palette.line, backgroundColor: palette.surface },
   contentColumn: { flex: 1, minWidth: 0, backgroundColor: palette.canvas },
   scrollContent: { paddingHorizontal: 18, paddingTop: 14, paddingBottom: 112 },
+  updateBanner: { backgroundColor: palette.forest, paddingVertical: 12, paddingHorizontal: 18, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  updateBannerText: { color: palette.white, fontSize: 13, fontWeight: '700' },
+  updateBannerAction: { color: palette.mint, fontSize: 13, fontWeight: '800' },
+  updateIdText: { color: palette.muted, fontSize: 10, textAlign: 'center', marginTop: 10 },
   scrollContentWide: { paddingHorizontal: 42, paddingTop: 44, paddingBottom: 52 },
   pressed: { opacity: 0.78 }, 
   loadingScreen: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: palette.canvas, padding: 28 }, loadingMark: { width: 62, height: 62, borderRadius: 20, backgroundColor: palette.forest, alignItems: 'center', justifyContent: 'center' }, loadingMarkText: { fontSize: 31, fontWeight: '800', color: palette.white }, loadingSpinner: { marginTop: 24 }, loadingTitle: { marginTop: 16, color: palette.ink, fontSize: 18, fontWeight: '700' }, loadingCopy: { marginTop: 7, color: palette.muted, fontSize: 14, textAlign: 'center', maxWidth: 290, lineHeight: 20 },
