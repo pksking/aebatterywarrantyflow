@@ -334,13 +334,13 @@ if (supabase) {
     if (!supabase) return;
 
     const modelToSave = {
-      ...model,
-      id: model.id || makeUuid(),
+      ...model, // if id is empty, it's a new model
+      id: model.id || makeUuid(), // Ensure new models get an ID
       repair_price: Number(model.repair_price) || 0,
       selling_price: Number(model.selling_price) || 0,
     };
 
-    const { data, error } = await supabase.from('ups_models').upsert(modelToSave, { onConflict: 'id' }).select();
+    const { data, error } = await supabase.from('ups_models').upsert(modelToSave).select();
     if (error) {
       Alert.alert('Error', 'Could not save UPS model.');
       console.error(error);
@@ -369,16 +369,11 @@ const { error } = await supabase.from('ups_models').delete().eq('id', modelId);
   };
 
   const runSyncClaims = async (): Promise<void> => {
-    const projectRef = process.env.EXPO_PUBLIC_SUPABASE_PROJECT_REF?.replace(/\/$/, '') || '';
     const cronSecret = process.env.EXPO_PUBLIC_CRON_SECRET || '';
-    if (!projectRef) {
-      Alert.alert('Unable to sync', 'The Supabase project ref is not configured.');
-      return;
-    }
     setSyncingClaims(true);
     setSyncMessage('Syncing claims to Google Sheets...');
     try {
-      const response = await fetch(`https://${projectRef}.supabase.co/functions/v1/sync-claims`, {
+      const response = await fetch(`/api/sync-claims`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${cronSecret}` },
       });
@@ -398,16 +393,11 @@ setSyncMessage(`Claims sync complete: ${result.synced} synced.`);
   };
 
   const runSyncUpsPrices = async (): Promise<void> => {
-    const projectRef = process.env.EXPO_PUBLIC_SUPABASE_PROJECT_REF?.replace(/\/$/, '') || '';
     const cronSecret = process.env.EXPO_PUBLIC_CRON_SECRET || '';
-    if (!projectRef) {
-      Alert.alert('Unable to sync', 'The Supabase project ref is not configured.');
-      return;
-    }
     setSyncingUpsPrices(true);
     setSyncMessage('Syncing UPS prices to Google Sheets...');
     try {
-      const response = await fetch(`https://${projectRef}.supabase.co/functions/v1/sync-ups-prices`, {
+      const response = await fetch(`/api/sync-ups-prices`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${cronSecret}` },
       });
@@ -1520,7 +1510,7 @@ function ExchangeScreen({
 
   const findClaim = (value = oldSerial) => {
     const serial = extractSerial(value);
-    setOldSerial(serial);
+    setOldSerial(value); // Keep the raw value in the input
     const found = claims.find((item) => item.productSerial === serial);
     if (!found) {
       setClaim(null);
@@ -1545,15 +1535,15 @@ function ExchangeScreen({
     <View>
       <ScreenHeading eyebrow="WARRANTY EXCHANGE" title="Link the old item to its replacement." copy="One clean record keeps the customer, both serial numbers, and the hand-off together." />
       <View style={styles.exchangeLayout}>
-        <View style={[styles.surface, styles.exchangeCard]}>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={[styles.surface, styles.exchangeCard]}>
           <View style={styles.exchangeStepTop}><View style={styles.exchangeStepNumber}><Text style={styles.exchangeStepNumberText}>1</Text></View><View><Text style={styles.intakeSectionTitle}>Find the original claim</Text><Text style={styles.sectionCopy}>Scan or type the serial currently on record.</Text></View></View>
           <View style={styles.exchangeSearchRow}><TextInput value={oldSerial} onChangeText={(value) => { setOldSerial(value); setClaim(null); }} placeholder="Old product serial" placeholderTextColor={palette.muted} autoCapitalize="characters" style={styles.exchangeInput} /><Pressable onPress={() => onOpenScanner((payload) => { setOldSerial(extractSerial(payload)); findClaim(payload); })} style={styles.exchangeScanButton}><Text style={styles.exchangeScanText}>Scan</Text></Pressable><PrimaryButton label="Find" onPress={() => findClaim()} compact /></View>
           {claim ? <View style={styles.foundClaim}><View style={styles.foundClaimTop}><Badge label={claim.caseNumber} tone="forest" /><StatusBadge status={claim.status} /></View><Text style={styles.foundClaimProduct}>{claim.productName}</Text><Text style={styles.foundClaimSerial}>{claim.productSerial}</Text><View style={styles.foundClaimMeta}><Text style={styles.foundClaimMetaText}>{claim.customerName}</Text><Text style={styles.metaDivider}>•</Text><Text style={styles.foundClaimMetaText}>{claim.mobileNumber}</Text><Pressable onPress={() => onOpenClaim(claim)}><Text style={styles.textLink}>Open claim ›</Text></Pressable></View></View> : <View style={styles.emptyFound}><Text style={styles.emptyFoundIcon}>⌕</Text><Text style={styles.emptyFoundText}>The old product will appear here once found.</Text></View>}
-        </View>
+        </KeyboardAvoidingView>
 
         <View style={styles.exchangeConnector}><View style={styles.connectorLine} /><View style={styles.connectorArrow}><Text style={styles.connectorArrowText}>→</Text></View><View style={styles.connectorLine} /></View>
 
-        <View style={[styles.surface, styles.exchangeCard, !claim && styles.exchangeCardMuted]}>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={[styles.surface, styles.exchangeCard, !claim && styles.exchangeCardMuted]}>
           <View style={styles.exchangeStepTop}><View style={[styles.exchangeStepNumber, claim && styles.exchangeStepNumberActive]}><Text style={[styles.exchangeStepNumberText, claim && styles.exchangeStepNumberTextActive]}>2</Text></View><View><Text style={styles.intakeSectionTitle}>Scan the replacement</Text><Text style={styles.sectionCopy}>The new serial is linked, never used to overwrite the old one.</Text></View></View>
           <View style={styles.scanReplacement}><Text style={styles.replacementIcon}>▣</Text><View style={styles.replacementCopy}><Text style={styles.replacementTitle}>New product identifier</Text><Text style={styles.replacementText}>Scan QR, product URL, or type the serial from the replacement.</Text></View><GhostButton label="Open scanner" onPress={() => onOpenScanner((payload) => setNewSerial(extractSerial(payload)))} compact /></View>
           <Field label="New product serial" value={newSerial} onChangeText={setNewSerial} placeholder="e.g. AMR-INV-40188" autoCapitalize="characters" />
@@ -1561,7 +1551,7 @@ function ExchangeScreen({
           <Pressable onPress={() => setDelivered((current) => !current)} style={styles.deliveryToggle}><View style={[styles.checkbox, delivered && styles.checkboxChecked]}>{delivered ? <Text style={styles.checkboxTick}>✓</Text> : null}</View><View><Text style={styles.deliveryToggleTitle}>Replacement handed to customer now</Text><Text style={styles.deliveryToggleCopy}>Mark the original claim Delivered and Cleared when confirmed.</Text></View></Pressable>
           {message ? <View style={styles.formNotice}><Text style={styles.formNoticeIcon}>i</Text><Text style={styles.formNoticeText}>{message}</Text></View> : null}
           <PrimaryButton label="Confirm warranty exchange" onPress={complete} fullWidth disabled={!claim} />
-        </View>
+        </KeyboardAvoidingView>
       </View>
       <View style={styles.exchangeSafety}><Text style={styles.exchangeSafetyIcon}>✓</Text><Text style={styles.exchangeSafetyText}>The old and new serials remain visible in one claim record and are included in the Sheets sync audit.</Text></View>
     </View>
@@ -1721,10 +1711,10 @@ const demoMembers: AppUser[] = [
             <Text style={styles.sectionTitle}>Manual sync controls</Text>
             <Text style={styles.sectionCopy}>Retry any pending claim syncs or publish the latest UPS price list to your sheet.</Text>
             <View style={styles.syncButtonRow}>
-              <PrimaryButton label={syncingClaims ? 'Syncing claims…' : 'Retry claim sync'} onPress={runSyncClaims} disabled={syncingClaims} compact />
-              <PrimaryButton label={syncingUpsPrices ? 'Syncing UPS prices…' : 'Sync UPS prices'} onPress={runSyncUpsPrices} disabled={syncingUpsPrices} compact />
-            </View>
-            {syncMessage ? <Text style={styles.syncMessage}>{syncMessage}</Text> : null}
+              <PrimaryButton label={syncingClaims ? 'Syncing claims…' : 'Retry claim sync'} onPress={() => void runSyncClaims()} disabled={syncingClaims} compact />
+              <PrimaryButton label={syncingUpsPrices ? 'Syncing UPS prices…' : 'Sync UPS prices'} onPress={() => void runSyncUpsPrices()} disabled={syncingUpsPrices} compact />
+            </View> 
+            {syncMessage ? <Text style={styles.syncMessage}>{syncMessage}</Text> : null} 
           </View>
         </View>
 
@@ -1778,24 +1768,25 @@ const demoMembers: AppUser[] = [
                 </View>
               ))}
             </View>
-            <View style={{ marginTop: 16, paddingTop: 16, borderTopWidth: 1, borderColor: palette.line }}>
-              <Text style={styles.sectionTitle}>{editingUpsModel?.id ? 'Edit UPS Model' : 'Add New UPS Model'}</Text>
-              <Field label="Model Name" value={editingUpsModel?.model_name || ''} onChangeText={text => setEditingUpsModel(m => ({ ...(m || emptyUpsModel()), model_name: text }))} placeholder="e.g. Microtek EB 1100" />
-              <View style={styles.twoFieldGrid}>
-                <Field label="Repair Price" value={String(editingUpsModel?.repair_price || '')} onChangeText={text => setEditingUpsModel(m => ({ ...(m || emptyUpsModel()), repair_price: Number(text) }))} placeholder="500" keyboardType="numeric" />
-                <Field label="Selling Price" value={String(editingUpsModel?.selling_price || '')} onChangeText={text => setEditingUpsModel(m => ({ ...(m || emptyUpsModel()), selling_price: Number(text) }))} placeholder="750" keyboardType="numeric" />
+            <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+              <View style={{ marginTop: 16, paddingTop: 16, borderTopWidth: 1, borderColor: palette.line }}>
+                <Text style={styles.sectionTitle}>{editingUpsModel?.id ? 'Edit UPS Model' : 'Add New UPS Model'}</Text>
+                <Field label="Model Name" value={editingUpsModel?.model_name || ''} onChangeText={text => setEditingUpsModel(m => ({ ...(m || emptyUpsModel()), model_name: text }))} placeholder="e.g. Microtek EB 1100" />
+                <View style={styles.twoFieldGrid}>
+                  <Field label="Repair Price" value={String(editingUpsModel?.repair_price || '')} onChangeText={text => setEditingUpsModel(m => ({ ...(m || emptyUpsModel()), repair_price: Number(text) }))} placeholder="500" keyboardType="numeric" />
+                  <Field label="Selling Price" value={String(editingUpsModel?.selling_price || '')} onChangeText={text => setEditingUpsModel(m => ({ ...(m || emptyUpsModel()), selling_price: Number(text) }))} placeholder="750" keyboardType="numeric" />
+                </View>
+                <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
+                  <PrimaryButton
+                    label="Save Model"
+                    onPress={() => {
+                      if (editingUpsModel) void onSaveUpsModel(editingUpsModel).then(() => setEditingUpsModel(null));
+                    }}
+                  />
+                  <GhostButton label="Cancel" onPress={() => setEditingUpsModel(null)} />
+                </View>
               </View>
-              <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
-                <PrimaryButton
-                  label="Save Model"
-                  onPress={() => {
-                    if (!editingUpsModel) return;
-                    onSaveUpsModel(editingUpsModel).then(() => setEditingUpsModel(null));
-                  }}
-                />
-                <GhostButton label="Cancel" onPress={() => setEditingUpsModel(null)} />
-              </View>
-            </View>
+            </KeyboardAvoidingView>
           </View>
         )}
 
@@ -1933,9 +1924,9 @@ const cameraRef = useRef<CameraView | null>(null);
   const capture = async () => {
     if (!cameraRef.current || busy) return;
     setBusy(true);
-    try { // @ts-ignore: Property 'takePictureAsync' does not exist on type 'never'.
+    try {
       const photo = await cameraRef.current.takePictureAsync({ quality: 0.6, skipProcessing: true });
-      onCapture({ id: makeUuid(), uri: photo.uri, name: `Attachment ${new Date().toLocaleString()}` } as ClaimAttachment);
+      onCapture({ id: makeUuid(), uri: photo.uri, name: `Attachment ${new Date().toLocaleString()}` });
       onClose();
     } catch (error) {
       console.error('Failed to capture attachment', error);
@@ -1949,7 +1940,7 @@ const cameraRef = useRef<CameraView | null>(null);
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
       <SafeAreaView style={styles.scannerScreen}>
         <View style={styles.scannerHeader}><View><Text style={styles.scannerTitle}>Capture attachment</Text><Text style={styles.scannerCopy}>Take a photo of the product, receipt, or damage details.</Text></View><Pressable onPress={onClose} style={styles.scannerClose}><Text style={styles.scannerCloseText}>×</Text></Pressable></View>
-        <View style={[styles.cameraFrame, { borderRadius: 0 }]}> {/* @ts-ignore: Property 'Constants' does not exist on type 'typeof CameraView'. */}
+        <View style={[styles.cameraFrame, { borderRadius: 0 }]}>
           {!permission ? <View style={styles.cameraMessage}><ActivityIndicator color={palette.white} /></View> : !permission.granted ? <View style={styles.cameraMessage}><Text style={styles.cameraMessageTitle}>Camera access is needed.</Text><PrimaryButton label="Allow camera" onPress={() => void requestPermission()} /></View> : <CameraView style={styles.camera} ref={cameraRef} facing="back" />}
         </View>
         <View style={styles.manualScanEntry}><Text style={styles.fieldLabel}>Need a better angle?</Text><View style={styles.manualScanRow}><PrimaryButton label={busy ? 'Capturing…' : 'Take photo'} onPress={capture} disabled={busy || !permission?.granted} compact /><GhostButton label="Cancel" onPress={onClose} compact /></View></View>
