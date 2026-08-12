@@ -23,6 +23,7 @@
     "expo-camera": "~57.0.3",
     "expo-notifications": "~57.0.10",
     "expo-status-bar": "~57.0.1",
+    "expo-updates": "~57.0.13",
     "fbjs": "^3.0.5",
     "googleapis": "^170.0.0",
     "hermes-parser": "^0.20.0",

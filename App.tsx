@@ -1,4 +1,5 @@
 import * as Notifications from 'expo-notifications';
+import * as Updates from 'expo-updates';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -651,6 +652,26 @@ setSyncMessage(`Claims sync complete: ${result.synced} synced.`);
     }
   };
 
+  const checkForUpdates = async () => {
+    if (__DEV__) {
+      Alert.alert('Development Mode', 'You are in development mode. Updates are not applicable.');
+      return;
+    }
+    try {
+      const update = await Updates.checkForUpdateAsync();
+      if (update.isAvailable) {
+        Alert.alert('Update Found!', 'An update is available and will be applied on the next app restart.', [
+          { text: 'OK' },
+          { text: 'Restart Now', onPress: async () => { await Updates.fetchUpdateAsync(); await Updates.reloadAsync(); } },
+        ]);
+      } else {
+        Alert.alert('No Updates', 'You are already running the latest version.');
+      }
+    } catch (error) {
+      Alert.alert('Update Check Failed', `An error occurred while checking for updates: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+
   const handleUpsAssigneeChange = (name: string) => {
     const isSelected = upsAssignees.includes(name);
     const nextAssignees = isSelected ? upsAssignees.filter((n) => n !== name) : [...upsAssignees, name];
@@ -743,6 +764,7 @@ if (!signedIn) {
             onSignOut={async () => {
               if (supabase) await supabase.auth.signOut();
               setSignedIn(false);
+              setUser(defaultUser);
               setScreen('dashboard');
             }}
             onBatteryAssigneeChange={handleBatteryAssigneeChange}
@@ -1793,6 +1815,11 @@ const demoMembers: AppUser[] = [
         {!isSupabaseConfigured ? <View style={styles.demoResetRow}><View><Text style={styles.demoResetTitle}>Need a clean demo?</Text><Text style={styles.demoResetCopy}>Restore the example claims stored only on this device.</Text></View><GhostButton label={resetting ? 'Resetting…' : 'Reset demo data'} onPress={async () => { setResetting(true); await onResetDemo(); setResetting(false); }} compact /></View> : null}
       </> : null}
     </View>
+
+      <View style={[styles.surface, { marginTop: 16 }]}>
+        <Text style={styles.sectionTitle}>App Updates</Text>
+        <PrimaryButton label="Check for Updates" onPress={checkForUpdates} fullWidth />
+      </View>
   );
 }
 
