@@ -384,7 +384,10 @@ const { error } = await supabase.from('ups_models').delete().eq('id', modelId);
     try {
       const response = await fetch(`${apiUrl}/api/sync-claims`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${cronSecret}` },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: cronSecret,
+        },
       });
       const result = await response.json();
       if (!response.ok || !result.ok) {
@@ -409,7 +412,10 @@ setSyncMessage(`Claims sync complete: ${result.synced} synced.`);
     try {
       const response = await fetch(`${apiUrl}/api/sync-ups-prices`, {
         method: 'POST',
-        headers: { Authorization: `Bearer ${cronSecret}` },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: cronSecret,
+        },
       });
       const result = await response.json();
       if (!response.ok || !result.ok) {
