@@ -1,0 +1,15 @@
+git add .
+git commit -m "add any name for update"
+git push
+
+# Build a new APK for Android
+eas build --platform android --profile production
+
+sample run 2:- eas build --platform android --profile production
+
+
+
+# 1. Create the update files in a 'dist' folder
+npx expo export
+
+# 2. Deploy the 'dist' folder to your Vercel project

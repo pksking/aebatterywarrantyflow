@@ -380,8 +380,9 @@ const { error } = await supabase.from('ups_models').delete().eq('id', modelId);
     const cronSecret = process.env.EXPO_PUBLIC_CRON_SECRET || '';
     setSyncingClaims(true);
     setSyncMessage('Syncing claims to Google Sheets...');
+    const apiUrl = process.env.EXPO_PUBLIC_API_URL;
     try {
-      const response = await fetch(`/api/sync-claims`, {
+      const response = await fetch(`${apiUrl}/api/sync-claims`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${cronSecret}` },
       });
@@ -404,8 +405,9 @@ setSyncMessage(`Claims sync complete: ${result.synced} synced.`);
     const cronSecret = process.env.EXPO_PUBLIC_CRON_SECRET || '';
     setSyncingUpsPrices(true);
     setSyncMessage('Syncing UPS prices to Google Sheets...');
+    const apiUrl = process.env.EXPO_PUBLIC_API_URL;
     try {
-      const response = await fetch(`/api/sync-ups-prices`, {
+      const response = await fetch(`${apiUrl}/api/sync-ups-prices`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${cronSecret}` },
       });
