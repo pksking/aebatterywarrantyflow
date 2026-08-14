@@ -517,11 +517,11 @@ setSyncMessage(`Claims sync complete: ${result.synced} synced.`);
   };
 
   const updateClaim = (id: string, updates: Partial<Claim>) => {
-    const cloudUpdates = { ...updates, updatedAt: new Date().toISOString(), syncState: 'pending' as SyncState };
+    const cloudUpdates = { ...updates, createdBy: user.name, updatedAt: new Date().toISOString(), syncState: 'pending' as SyncState };
     setClaims((current) =>
       current.map((claim) =>
         claim.id === id
-          ? { ...claim, ...cloudUpdates }
+          ? { ...claim, ...updates, createdBy: user.name, updatedAt: cloudUpdates.updatedAt, syncState: cloudUpdates.syncState }
           : claim,
       ),
     );
@@ -530,7 +530,7 @@ setSyncMessage(`Claims sync complete: ${result.synced} synced.`);
         ? { ...current, ...cloudUpdates }
         : current,
     );
-    void patchCloudClaim(id, cloudUpdates).catch(() => {
+    void patchCloudClaim(id, { ...updates, createdBy: user.name, updatedAt: cloudUpdates.updatedAt, syncState: cloudUpdates.syncState }).catch(() => {
       // The optimistic UI remains usable when a network connection drops.
     });
   };
