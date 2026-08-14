@@ -386,7 +386,7 @@ const { error } = await supabase.from('ups_models').delete().eq('id', modelId);
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: cronSecret,
+          Authorization: `Bearer ${cronSecret}`,
         },
       });
       const result = await response.json();
@@ -414,7 +414,7 @@ setSyncMessage(`Claims sync complete: ${result.synced} synced.`);
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: cronSecret,
+          Authorization: `Bearer ${cronSecret}`,
         },
       });
       const result = await response.json();
