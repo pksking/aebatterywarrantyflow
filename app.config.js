@@ -12,7 +12,7 @@ module.exports = {
       backgroundColor: '#ffffff',
     },
     updates: {
-      url: 'https://u.expo.dev/a2b99b19-d291-4461-b0b3-39cd38f2a7d3',
+      url: 'https://u.expo.dev/a887383c-9ded-4145-b918-9d577b5ecfbf',
     },
     runtimeVersion: {
       policy: 'appVersion',
