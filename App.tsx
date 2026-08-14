@@ -459,7 +459,7 @@ setSyncMessage(`Claims sync complete: ${result.synced} synced.`);
   }
 
   useEffect(() => {
-    const responseSubscription = Notifications.addNotificationResponseReceivedListener((response) => {
+    const responseSubscription = Notifications.addNotificationResponseReceivedListener((response: Notifications.NotificationResponse) => {
       const payload = response.notification.request.content.data as { screen?: string; filter?: string; assignee?: string } | undefined;
       const nextScreen = payload?.screen;
       const nextFilter = payload?.filter;
@@ -608,19 +608,14 @@ setSyncMessage(`Claims sync complete: ${result.synced} synced.`);
         for (const recipient of batteryAssignees) {
           if (batteryPolicy.mode === 'daily') {
             await scheduleSingle({
-              type: Notifications.SchedulableTriggerInputTypes.DAILY,
               hour: parsed.hour,
               minute: parsed.minute,
+              repeats: true,
             }, recipient);
           } else {
             // Simplified: schedule for next occurrence for interval/single
             const nextDate = buildNextReminderDate(batteryPolicy);
-            if (nextDate) {
-              await scheduleSingle({
-                type: Notifications.SchedulableTriggerInputTypes.DATE,
-                date: nextDate,
-              }, recipient);
-            }
+            if (nextDate) await scheduleSingle(nextDate, recipient);
           }
         }
       }
@@ -648,19 +643,14 @@ setSyncMessage(`Claims sync complete: ${result.synced} synced.`);
         for (const recipient of upsAssignees) {
           if (upsPolicy.mode === 'daily') {
             await scheduleSingle({
-              type: Notifications.SchedulableTriggerInputTypes.DAILY,
               hour: parsed.hour,
               minute: parsed.minute,
+              repeats: true,
             }, recipient);
           } else {
             // Simplified: schedule for next occurrence for interval/single
             const nextDate = buildNextReminderDate(upsPolicy);
-            if (nextDate) {
-              await scheduleSingle({
-                type: Notifications.SchedulableTriggerInputTypes.DATE,
-                date: nextDate,
-              }, recipient);
-            }
+            if (nextDate) await scheduleSingle(nextDate, recipient);
           }
         }
       }
@@ -1184,7 +1174,7 @@ function Sidebar({
         {items.filter((item) => !item.admin || user.role === 'admin').map((item) => (
           <Pressable
             key={item.id}
-            onPress={() => onNavigate(item.id)}
+            onPress={() => onNavigate(item.id as Screen)}
             style={({ pressed }) => [styles.sidebarItem, active === item.id && styles.sidebarItemActive, pressed && styles.pressed]}
           >
             <Text style={[styles.sidebarIcon, active === item.id && styles.sidebarIconActive]}>{item.icon}</Text>
@@ -1192,7 +1182,7 @@ function Sidebar({
           </Pressable>
         ))}
       </View>
-      <Pressable onPress={onProfile} style={({ pressed }) => [styles.sidebarUser, pressed && styles.pressed]}>
+      <Pressable onPress={onProfile} style={({ pressed }: { pressed: boolean }) => [styles.sidebarUser, pressed && styles.pressed]}>
         <Avatar name={user.name} />
         <View style={styles.sidebarUserCopy}><Text style={styles.sidebarUserName}>{user.name}</Text><Text style={styles.sidebarUserRole}>{user.role === 'admin' ? 'Administrator' : 'Staff member'}</Text></View>
         <Text style={styles.sidebarChevron}>›</Text>
@@ -1208,7 +1198,7 @@ function MobileHeader({ user, title, onProfile }: { user: AppUser; title: string
         <Image source={require('./assets/icon.png')} style={styles.mobileMark} />
         <View><Text style={styles.mobileHeaderTitle}>{title}</Text><Text style={styles.mobileHeaderSub}>AE Complaint Logs</Text></View> 
       </View>
-      <Pressable onPress={onProfile} style={({ pressed }) => [pressed && styles.pressed]}><Avatar name={user.name} small /></Pressable>
+      <Pressable onPress={onProfile} style={({ pressed }: { pressed: boolean }) => [pressed && styles.pressed]}><Avatar name={user.name} small /></Pressable>
     </View>
   );
 }
@@ -1968,7 +1958,7 @@ function ScannerModal({ visible, onClose, onScan }: { visible: boolean; onClose:
       <SafeAreaView style={styles.scannerScreen}>
         <View style={styles.scannerHeader}><View><Text style={styles.scannerTitle}>Scan product code</Text><Text style={styles.scannerCopy}>QR, barcode, or serial label.</Text></View><Pressable onPress={onClose} style={styles.scannerClose}><Text style={styles.scannerCloseText}>×</Text></Pressable></View>
         <View style={styles.cameraFrame}>
-          {!permission ? <View style={styles.cameraMessage}><ActivityIndicator color={palette.white} /></View> : !permission.granted ? <View style={styles.cameraMessage}><Text style={styles.cameraMessageTitle}>Camera access is needed to scan.</Text><Text style={styles.cameraMessageCopy}>You can also paste or type an identifier below.</Text><PrimaryButton label="Allow camera" onPress={() => void requestPermission()} /></View> : <CameraView style={styles.camera} facing="back" onBarcodeScanned={paused ? undefined : ({ data }) => complete(data)} barcodeScannerSettings={{ barcodeTypes: ['qr', 'code128', 'code39', 'ean13', 'ean8'] }} autofocus="on" />}
+          {!permission ? <View style={styles.cameraMessage}><ActivityIndicator color={palette.white} /></View> : !permission.granted ? <View style={styles.cameraMessage}><Text style={styles.cameraMessageTitle}>Camera access is needed to scan.</Text><Text style={styles.cameraMessageCopy}>You can also paste or type an identifier below.</Text><PrimaryButton label="Allow camera" onPress={() => void requestPermission()} /></View> : <CameraView style={styles.camera} facing="back" onBarcodeScanned={paused ? undefined : ({ data }: { data: string }) => complete(data)} barcodeScannerSettings={{ barcodeTypes: ['qr', 'code128', 'code39', 'ean13', 'ean8'] }} autofocus="on" />}
           <View pointerEvents="none" style={styles.scanGuide}><View style={styles.guideCornerTopLeft} /><View style={styles.guideCornerTopRight} /><View style={styles.guideCornerBottomLeft} /><View style={styles.guideCornerBottomRight} /></View>
         </View>
         <View style={styles.manualScanEntry}><Text style={styles.fieldLabel}>NO CAMERA? PASTE OR TYPE THE CODE</Text><View style={styles.manualScanRow}><TextInput value={manualValue} onChangeText={setManualValue} placeholder="Serial, QR value, or product URL" placeholderTextColor={palette.muted} style={styles.manualScanInput} autoCapitalize="characters" /><PrimaryButton label="Use code" onPress={() => complete(manualValue)} compact /></View><Text style={styles.manualScanHint}>If it’s a URL, WarrantyFlow extracts the serial safely—it never opens the link.</Text></View>
@@ -1987,8 +1977,10 @@ const cameraRef = useRef<CameraView | null>(null);
     setBusy(true);
     try {
       const photo = await cameraRef.current.takePictureAsync({ quality: 0.6, skipProcessing: true });
-      onCapture({ id: makeUuid(), uri: photo.uri, name: `Attachment ${new Date().toLocaleString()}` });
-      onClose();
+      if (photo?.uri) {
+        onCapture({ id: makeUuid(), uri: photo.uri, name: `Attachment ${new Date().toLocaleString()}` });
+        onClose();
+      }
     } catch (error) {
       console.error('Failed to capture attachment', error);
       Alert.alert('Capture failed', 'Unable to take the photo.');
@@ -2066,14 +2058,14 @@ function DetailSpec({ label, value }: { label: string; value: string }) {
 }
 
 function TeamRow({ user, currentRole, onChange }: { user: AppUser; currentRole: UserRole; onChange: (role: UserRole) => void }) {
-  const initials = user.name.split(' ').map((part) => part[0]).slice(0, 2).join('').toUpperCase();
+  const initials = user.name.split(' ').map((part: string) => part[0]).slice(0, 2).join('').toUpperCase();
   return <View style={styles.teamRow}><View style={styles.teamAvatar}><Text style={styles.teamAvatarText}>{initials}</Text></View><View style={styles.teamInfo}><Text style={styles.teamName}>{user.name}</Text><Text style={styles.teamEmail}>{user.email}</Text></View><Pressable onPress={() => onChange(user.role)} style={[styles.teamRole, currentRole === user.role && styles.teamRoleActive]}><Text style={[styles.teamRoleText, currentRole === user.role && styles.teamRoleTextActive]}>{user.role === 'admin' ? 'Admin' : 'Staff'}</Text></Pressable></View>;
 }
 
 function AssigneeRow({ user, active, onSelect }: { user: AppUser; active: boolean; onSelect: () => void }) {
   const initials = user.name.split(' ').map((part) => part[0]).slice(0, 2).join('').toUpperCase();
   return (
-    <Pressable onPress={onSelect} style={({ pressed }) => [styles.teamRow, pressed && styles.pressed]}><View style={styles.teamAvatar}><Text style={styles.teamAvatarText}>{initials}</Text></View><View style={styles.teamInfo}><Text style={styles.teamName}>{user.name}</Text><Text style={styles.teamEmail}>{user.role === 'admin' ? 'Administrator' : 'Staff member'}</Text></View><View style={[styles.checkbox, active && styles.checkboxChecked]}>{active ? <Text style={styles.checkboxTick}>✓</Text> : null}</View></Pressable>
+    <Pressable onPress={onSelect} style={({ pressed }: { pressed: boolean }) => [styles.teamRow, pressed && styles.pressed]}><View style={styles.teamAvatar}><Text style={styles.teamAvatarText}>{initials}</Text></View><View style={styles.teamInfo}><Text style={styles.teamName}>{user.name}</Text><Text style={styles.teamEmail}>{user.role === 'admin' ? 'Administrator' : 'Staff member'}</Text></View><View style={[styles.checkbox, active && styles.checkboxChecked]}>{active ? <Text style={styles.checkboxTick}>✓</Text> : null}</View></Pressable>
   );
 }
 
@@ -2104,15 +2096,10 @@ function Field({ label, value, onChangeText, placeholder, keyboardType = 'defaul
 }
 
 function PrimaryButton({ label, onPress, disabled = false, compact = false, fullWidth = false }: { label: string; onPress: () => void; disabled?: boolean; compact?: boolean; fullWidth?: boolean }) { return <Pressable disabled={disabled} onPress={onPress} style={({ pressed }) => [styles.primaryButton, compact && styles.primaryButtonCompact, fullWidth && styles.buttonFull, disabled && styles.buttonDisabled, pressed && !disabled && styles.pressed]}><Text style={[styles.primaryButtonText, compact && styles.primaryButtonCompactText]}>{label}</Text></Pressable>; }
-
-function GhostButton({ label, onPress, compact = false, fullWidth = false }: { label: string; onPress: () => void; compact?: boolean; fullWidth?: boolean }) { return <Pressable onPress={onPress} style={({ pressed }) => [styles.ghostButton, compact && styles.ghostButtonCompact, fullWidth && styles.buttonFull, pressed && styles.pressed]}><Text style={[styles.ghostButtonText, compact && styles.ghostButtonCompactText]}>{label}</Text></Pressable>; }
-
-function SegmentButton({ active, label, onPress }: { active: boolean; label: string; onPress: () => void }) { return <Pressable onPress={onPress} style={[styles.segmentButton, active && styles.segmentButtonActive]}><Text style={[styles.segmentButtonText, active && styles.segmentButtonTextActive]}>{label}</Text></Pressable>; }
-
-function FilterChip({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) { return <Pressable onPress={onPress} style={[styles.filterChip, active && styles.filterChipActive]}><Text style={[styles.filterChipText, active && styles.filterChipTextActive]}>{label}</Text></Pressable>; }
-
-function Avatar({ name, small = false, large = false }: { name: string; small?: boolean; large?: boolean }) { const initials = name.split(' ').map((part) => part[0]).slice(0, 2).join('').toUpperCase(); return <View style={[styles.avatar, small && styles.avatarSmall, large && styles.avatarLarge]}><Text style={[styles.avatarText, small && styles.avatarTextSmall, large && styles.avatarTextLarge]}>{initials}</Text></View>; }
-
+function GhostButton({ label, onPress, compact = false, fullWidth = false }: { label: string; onPress: () => void; compact?: boolean; fullWidth?: boolean }) { return <Pressable onPress={onPress} style={({ pressed }: { pressed: boolean }) => [styles.ghostButton, compact && styles.ghostButtonCompact, fullWidth && styles.buttonFull, pressed && styles.pressed]}><Text style={[styles.ghostButtonText, compact && styles.ghostButtonCompactText]}>{label}</Text></Pressable>; }
+function SegmentButton({ active, label, onPress }: { active: boolean; label: string; onPress: () => void }) { return <Pressable onPress={onPress} style={({ pressed }: { pressed: boolean }) => [styles.segmentButton, active && styles.segmentButtonActive]}><Text style={[styles.segmentButtonText, active && styles.segmentButtonTextActive]}>{label}</Text></Pressable>; }
+function FilterChip({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) { return <Pressable onPress={onPress} style={({ pressed }: { pressed: boolean }) => [styles.filterChip, active && styles.filterChipActive]}><Text style={[styles.filterChipText, active && styles.filterChipTextActive]}>{label}</Text></Pressable>; }
+function Avatar({ name, small = false, large = false }: { name: string; small?: boolean; large?: boolean }) { const initials = name.split(' ').map((part: string) => part[0]).slice(0, 2).join('').toUpperCase(); return <View style={[styles.avatar, small && styles.avatarSmall, large && styles.avatarLarge]}><Text style={[styles.avatarText, small && styles.avatarTextSmall, large && styles.avatarTextLarge]}>{initials}</Text></View>; }
 function EmptyState({ title, copy }: { title: string; copy: string }) { return <View style={styles.emptyState}><View style={styles.emptyIcon}><Text style={styles.emptyIconText}>⌕</Text></View><Text style={styles.emptyTitle}>{title}</Text><Text style={styles.emptyCopy}>{copy}</Text></View>; }
 function screenTitle(screen: Screen): string { return ({ dashboard: 'Overview', claims: 'Claims', intake: 'New complaint', exchange: 'Warranty exchange', settings: 'Settings' })[screen]; }
 function syncLabel(state: SyncState): string { return ({ synced: 'Synced', pending: 'Sync pending', failed: 'Sync needs retry', disabled: 'Demo mode' })[state]; }
