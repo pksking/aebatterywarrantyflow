@@ -43,5 +43,15 @@ module.exports = {
         NSCameraUsageDescription: 'WarrantyFlow uses your camera to scan product QR codes and serial labels.',
       },
     },
+    plugins: [
+      [
+        'expo-build-properties',
+        {
+          android: {
+            gradleVersion: '8.4',
+          },
+        },
+      ],
+    ],
   },
 };

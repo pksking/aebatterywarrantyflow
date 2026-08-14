@@ -20,7 +20,8 @@
       "autoIncrement": true,
       "android": {
         "buildType": "apk",
-        "channel": "production"
+        "channel": "production",
+        "useLegacyGradle": true
       },
       "env": {
         "EXPO_PUBLIC_SUPABASE_URL": "https://dwevlkdhmvwhbexmerkf.supabase.co",
