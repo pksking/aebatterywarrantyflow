@@ -1,5 +1,5 @@
 git add .
-git commit -m "changes for app image"
+git commit -m "maybe final changes for app image"
 git push
 
 # Build a new APK for Android

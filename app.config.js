@@ -36,5 +36,12 @@ module.exports = {
         'android.permission.RECORD_AUDIO',
       ],
     },
+    ios: {
+      supportsTablet: true,
+      bundleIdentifier: 'com.aecomplaintlogs.app',
+      infoPlist: {
+        NSCameraUsageDescription: 'WarrantyFlow uses your camera to scan product QR codes and serial labels.',
+      },
+    },
   },
 };
